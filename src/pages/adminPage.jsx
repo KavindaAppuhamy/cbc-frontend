@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Route, Routes } from "react-router-dom";
 import { LayoutDashboard, ShoppingCart, Users, Star, Menu, X } from "lucide-react";
 
 export default function AdminPage() {
@@ -17,14 +17,14 @@ export default function AdminPage() {
                     <img
                         src="/eventora.png"
                         alt="Eventora Logo"
-                        className={`transition-all duration-300 ${isSidebarOpen ? "w-12" : "w-8"} rounded-lg`}
+                        className={`transition-all duration-300 ${isSidebarOpen ? "w-19" : "w-8"} rounded-lg`}
                     />
                     {isSidebarOpen && <span className="text-xl font-bold">Eventora</span>}
                 </div>
                 <nav className="space-y-4">
                     <Link to="/admin/products" className="flex items-center space-x-2 hover:bg-blue-700 p-2 rounded-md transition">
                         <ShoppingCart size={20} />
-                        {isSidebarOpen && <span>Events</span>}
+                        {isSidebarOpen && <span>Products</span>}
                     </Link>
                     <Link to="/admin/users" className="flex items-center space-x-2 hover:bg-blue-700 p-2 rounded-md transition">
                         <Users size={20} />
@@ -32,7 +32,7 @@ export default function AdminPage() {
                     </Link>
                     <Link to="/admin/orders" className="flex items-center space-x-2 hover:bg-blue-700 p-2 rounded-md transition">
                         <LayoutDashboard size={20} />
-                        {isSidebarOpen && <span>Bookings</span>}
+                        {isSidebarOpen && <span>Orders</span>}
                     </Link>
                     <Link to="/admin/reviews" className="flex items-center space-x-2 hover:bg-blue-700 p-2 rounded-md transition">
                         <Star size={20} />
@@ -41,17 +41,14 @@ export default function AdminPage() {
                 </nav>
             </div>
 
-            {/* Main Content */}
-            <div className="flex-1 p-6 overflow-auto">
-                <div className="bg-white shadow-md rounded-lg p-6 flex flex-col items-center text-center">
-                    <h1 className="text-3xl font-bold mb-4 text-[#154570]">Welcome to Admin Dashboard</h1>
-                    <p className="text-gray-600 mb-6">Select a section from the sidebar to manage data.</p>
-                    <img
-                        src="/eventora.png"
-                        alt="Eventora Full"
-                        className="w-full max-w-xl rounded-lg shadow-md mt-4"
-                    />
-                </div>
+            {/*Main content area*/}
+            <div className="h-full w-[calc(100%-300px)] flex-1 p-6 overflow-auto">
+                <Routes path="/*">
+                    <Route path="/products" element={<h1>Products</h1>}/>
+                    <Route path="/users" element={<h1>users</h1>}/>
+                    <Route path="/orders" element={<h1>orders</h1>}/>
+                    <Route path="/reviews" element={<h1>reviews</h1>}/>
+                </Routes>
             </div>
         </div>
     );
