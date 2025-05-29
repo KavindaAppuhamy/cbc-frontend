@@ -24,7 +24,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:3000/api/users/login", {
+      const response = await axios.post(import.meta.env.VITE_BACKEND_URL+"/api/users/login", {
         email,
         password
       });
