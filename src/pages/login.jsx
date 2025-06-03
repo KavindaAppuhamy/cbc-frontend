@@ -1,11 +1,12 @@
 import axios from "axios";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -31,7 +32,14 @@ export default function LoginPage() {
       
       toast.success("Login successful!");
       console.log(response.data);
-      // Here you would typically handle the successful login (e.g., redirect, store token)
+      localStorage.setItem("token", response.data.token); // Store token in localStorage
+
+      if (response.data.role === "admin") {
+        navigate("/admin")
+      }
+      else {
+        navigate("/"); // Redirect to dashboard
+      }
       
     } catch (err) {
       const errorMessage = err.response?.data?.message || "Login failed. Please try again.";
