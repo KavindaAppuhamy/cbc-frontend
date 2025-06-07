@@ -153,7 +153,7 @@ export default function AddProductPage() {
                                     type="file"
                                     multiple
                                     className="w-full px-4 py-3 rounded-2xl border-2 border-dashed border-gray-300 focus:border-pink-600 focus:ring-4 focus:ring-pink-200/50 transition-all duration-200 bg-white/30 backdrop-blur-sm text-gray-900
-                                                file:mr-4 file:py-2.5 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-pink-100 file:text-pink-700 hover:file:bg-pink-200 transition-colors duration-200 cursor-pointer"
+                                            file:mr-4 file:py-2.5 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-pink-100 file:text-pink-700 hover:file:bg-pink-200 cursor-pointer"
                                     onChange={(e) => setImages(Array.from(e.target.files))}
                                 />
                                 <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -161,9 +161,13 @@ export default function AddProductPage() {
                                 </div>
                             </div>
                             {images.length > 0 && (
-                                <p className="text-xs text-gray-500 mt-1.5 ml-0.5">Selected: {Array.from(images).map(file => file.name).join(', ')}</p>
+                                <p className="text-xs text-gray-500 mt-1.5 ml-0.5">
+                                    Selected: {Array.from(images).map(file => file.name).join(', ')}
+                                </p>
                             )}
-                            <p className="text-xs text-gray-500 mt-1.5 ml-0.5">Upload high-quality images (JPG, PNG, up to 5MB each)</p>
+                            <p className="text-xs text-gray-500 mt-1.5 ml-0.5">
+                                Upload high-quality images (JPG, PNG, up to 5MB each)
+                            </p>
                         </div>
 
                         {/* Pricing Section */}
