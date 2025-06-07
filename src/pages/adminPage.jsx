@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, Route, Routes } from "react-router-dom";
 import { LayoutDashboard, ShoppingCart, Users, Star } from "lucide-react";
 import AdminProductPage from "./admin/AdminProductPage";
-import AddProductPage from "./admin/addProduct";
+import AddProductPage from "./admin/addProductPage";
 
 export default function AdminPage() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
