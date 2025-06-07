@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, Route, Routes } from "react-router-dom";
 import { LayoutDashboard, ShoppingCart, Users, Star } from "lucide-react";
 import AdminProductPage from "./admin/AdminProductPage";
+import AddProductPage from "./admin/addProduct";
 
 export default function AdminPage() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -75,6 +76,7 @@ export default function AdminPage() {
                     <Route path="/users" element={<h1 className="p-6 text-2xl font-bold text-gray-800">Users Management</h1>}/>
                     <Route path="/orders" element={<h1 className="p-6 text-2xl font-bold text-gray-800">Order History</h1>}/>
                     <Route path="/reviews" element={<h1 className="p-6 text-2xl font-bold text-gray-800">Customer Reviews</h1>}/>
+                    <Route path="/add-product" element={<AddProductPage/>}/>
                 </Routes>
             </div>
         </div>
