@@ -27,5 +27,3 @@ export default function TestPage() {
     )
 }
 
-//https://hpqqmlrdndyglszpocpe.supabase.co
-//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwcXFtbHJkbmR5Z2xzenBvY3BlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMjEyMTMsImV4cCI6MjA2NDc5NzIxM30.6yCxYWmaote9MJLebzzRn7pgw82oyzGUcqR3w0TDZ34
