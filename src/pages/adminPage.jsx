@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Link, Route, Routes } from "react-router-dom";
 import { LayoutDashboard, ShoppingCart, Users, Star } from "lucide-react";
-
 import AddProductPage from "./admin/addProductPage";
 import AdminProductPage from "./admin/productsPage";
 import EditProductPage from "./admin/editProductPage";
+import ReviewPage from "./reviewPage";
 
 export default function AdminPage() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -77,7 +77,7 @@ export default function AdminPage() {
                     <Route path="/products" element={<AdminProductPage/>}/>
                     <Route path="/users" element={<h1 className="p-6 text-2xl font-bold text-gray-800">Users Management</h1>}/>
                     <Route path="/orders" element={<h1 className="p-6 text-2xl font-bold text-gray-800">Order History</h1>}/>
-                    <Route path="/reviews" element={<h1 className="p-6 text-2xl font-bold text-gray-800">Customer Reviews</h1>}/>
+                    <Route path="/reviews" element={<ReviewPage/>}/>
                     <Route path="/add-product" element={<AddProductPage/>}/>
                     <Route path="/edit-product" element={<EditProductPage/>}/>
                 </Routes>
