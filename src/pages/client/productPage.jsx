@@ -20,7 +20,7 @@ export default function ProductPage() {
     )
 
     return(
-        <div className="w-full h-full flex flex-wrap justify-center items-center">
+        <div className="w-full h-full flex flex-wrap justify-center items-center mt-4">
             {
                 products.map((product)=>{
                     return(
