@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { BsStarFill, BsStar } from 'react-icons/bs';
+import { Link } from 'react-router-dom';
 
 const StarRating = ({ rating = 0, totalReviews = 0 }) => {
   const roundedRating = Math.round(rating); // ensure full star units
@@ -56,7 +57,7 @@ export default function ProductCard({ product }) {
   const displayTotalReviews = product?.totalReviews !== undefined ? product.totalReviews : ratingStats.totalReviews;
 
   return (
-    <div className="w-[300px] h-[450px] flex flex-col bg-white shadow-lg rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105 border border-gray-100 m-2 group">
+    <Link to={"/overview/"+product.productId} className="w-[300px] h-[450px] flex flex-col bg-accent shadow-lg rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105 border border-gray-100 m-2 group">
       {/* Image Container */}
       <div className="relative h-56 bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden">
         {product?.images?.length > 0 ? (
@@ -97,7 +98,7 @@ export default function ProductCard({ product }) {
       </div>
 
       {/* Product Details */}
-      <div className="flex flex-col flex-1 p-5 bg-white">
+      <div className="flex flex-col flex-1 p-5 bg-primary">
         <h3 className="font-bold text-gray-900 text-lg mb-2 leading-tight">
           {product?.name || "Unnamed Product"}
         </h3>
@@ -160,6 +161,6 @@ export default function ProductCard({ product }) {
           </button>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

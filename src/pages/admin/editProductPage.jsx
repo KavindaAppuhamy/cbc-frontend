@@ -15,59 +15,59 @@ export default function EditProductPage() {
     const [labelledPrice, setLabelledPrice] = useState(location.state.labelledPrice || 0); 
     const [price, setPrice] = useState(location.state.price);
     const [stock, setStock] = useState(location.state.stock);
+    const [currentImages, setCurrentImages] = useState(location.state.images);
     const navigate = useNavigate();
     
     console.log(location);
 
     async function updateProduct() {
-        const token = localStorage.getItem("token");
-        if (token == null) {
-            toast.error("Please login First");
-            return;
-        }
-
-        let imageUrls = location.state.images;
-
-        const promisesArray = [];
-
-        for (let i = 0; i < images.length; i++) {
-            promisesArray[i] = mediaUpload(images[i]);
-        }
-        try {
-            if(images.length > 0){
-                imageUrls = await Promise.all(promisesArray);
-            }
-
-            console.log(imageUrls);
-
-            // Ensure altNames is handled correctly as an array for the product object
-            const altNamesArray = Array.isArray(altNames) ? altNames.map(name => name.trim()) : altNames.split(",").map(name => name.trim());
-
-            const product = {
-                productId: productId,
-                name: name,
-                altNames: altNamesArray,
-                description: description,
-                images: imageUrls,
-                labelledPrice: Number(labelledPrice), // Ensure numbers are numbers
-                price: Number(price), // Ensure numbers are numbers
-                stock: Number(stock), // Ensure numbers are numbers
-            };
-            axios.put(import.meta.env.VITE_BACKEND_URL + "/api/products/" + productId, product, {
-                headers: {
-                    "Authorization": "Bearer " + token
-                }
-            }).then(() => {
-                toast.success("Product updated successfully");
-                navigate("/admin/products");
-            }).catch((e) => {
-                toast.error(e.response.data.message);
-            });
-        } catch (e) {
-            console.log(e);
-            toast.error("An error occurred during product creation."); // Generic error message
-        }
+    const token = localStorage.getItem("token");
+    if (!token) {
+        toast.error("Please login first");
+        return;
     }
+
+    let imageUrls = currentImages;  
+
+    try {
+        // Upload new images only if selected
+        if (images.length > 0) {
+            const uploads = images.map(img => mediaUpload(img));
+            imageUrls = await Promise.all(uploads);
+            setCurrentImages(imageUrls);
+        }
+
+        const altNamesArray = Array.isArray(altNames)
+            ? altNames.map(a => a.trim())
+            : altNames.split(",").map(a => a.trim());
+
+        const product = {
+            productId,
+            name,
+            altNames: altNamesArray,
+            description,
+            images: imageUrls,
+            labelledPrice: Number(labelledPrice),
+            price: Number(price),
+            stock: Number(stock),
+        };
+
+        await axios.put(
+            `${import.meta.env.VITE_BACKEND_URL}/api/products/${productId}`,
+            product,
+            { headers: { Authorization: "Bearer " + token } }
+        );
+
+        toast.success("Product updated successfully!");
+
+        setTimeout(() => {
+            navigate("/admin/products");
+        }, 600);
+
+    } catch (error) {
+        toast.error(error?.response?.data?.message || "Update failed");
+    }
+}
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-12 px-4 font-sans antialiased">

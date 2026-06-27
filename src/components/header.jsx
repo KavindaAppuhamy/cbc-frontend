@@ -1,27 +1,42 @@
 import { Link, useNavigate } from "react-router-dom";
 import UserData from "./userData";
 
-export default function Header(){
-    const navigate = useNavigate()
-    console.log("Header component loaded")
-    return(
-        <header className="w-full h-[80px] shadow-2xl flex">
+export default function Header() {
+  const navigate = useNavigate();
+  console.log("Header component loaded");
 
-            <img onClick={()=>{
-                navigate("/");
-            }} src="/Logo.png" alt="Logo" className="w-[80px] h-[80px] object-cover cursor-pointer"/>
+  return (
+    <header className="w-full h-[80px] shadow-2xl flex items-center justify-between bg-secondary px-6">
+      {/* Logo Section */}
+      <div
+        className="flex items-center cursor-pointer"
+        onClick={() => navigate("/")}
+      >
+        <img
+          src="/Logo.png"
+          alt="Logo"
+          className="w-[100px] h-[100px] object-contain"
+        />
+      </div>
 
-            <div className="w-[calc(100%-160px)] h-full flex justify-center items-center">
-                <Link to="/" className="text-[20px] font-bold mx-2">Home</Link>
-                <Link to="/products" className="text-[20px] font-bold mx-2">Products</Link>
-                <Link to="/about" className="text-[20px] font-bold mx-2">About</Link>
-                <Link to="/contact" className="text-[20px] font-bold mx-2">Contact</Link>
-            </div>
+      {/* Navigation Links */}
+      <nav className="flex items-center justify-center space-x-6">
+        <Link to="/" className="text-[18px] font-bold hover:text-accent">
+          Home
+        </Link>
+        <Link to="/products" className="text-[18px] font-bold hover:text-accent">
+          Products
+        </Link>
+        <Link to="/about" className="text-[18px] font-bold hover:text-accent">
+          About
+        </Link>
+        <Link to="/contact" className="text-[18px] font-bold hover:text-accent">
+          Contact
+        </Link>
+      </nav>
 
-            <div className="w-[80px] bg-blue-600 h-full flex justify-center items-center">
-
-            </div> 
-            
-        </header>
-    )
+      {/* Right Section (User / Icons etc.) */}
+      <div className="w-[60px] h-full flex justify-center items-center bg-accent rounded-l-lg"></div>
+    </header>
+  );
 }

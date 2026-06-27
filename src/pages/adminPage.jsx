@@ -20,17 +20,17 @@ export default function AdminPage() {
                 {/* Header */}
                 <div className="flex items-center p-6 border-b border-gray-600/30">
                     <img
-                        src="/eventora.png"
-                        alt="Eventora Logo"
-                        className={`transition-all duration-300 ease-in-out ${isSidebarOpen ? "w-10 h-10" : "w-8 h-8"} rounded-lg shadow-sm`}
+                        src="/Logo.png"
+                        alt="CBC Logo"
+                        className={`transition-all duration-300 ease-in-out ${isSidebarOpen ? "w-60 h-30" : "w-30 h-8"} `}
                     />
                     {/* Use a container with overflow-hidden and controlled width for smoother text appearance */}
-                    <div className={`ml-3 overflow-hidden ${isSidebarOpen ? "w-auto max-w-[180px] opacity-100" : "w-0 max-w-0 opacity-0"} transition-all duration-300 ease-in-out`}>
+                    {/* <div className={`ml-3 overflow-hidden ${isSidebarOpen ? "w-auto max-w-[180px] opacity-100" : "w-0 max-w-0 opacity-0"} transition-all duration-300 ease-in-out`}>
                         <span className="text-xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent whitespace-nowrap">
                             Eventora
                         </span>
                         <div className="text-xs text-blue-200 opacity-80 whitespace-nowrap">Admin Panel</div>
-                    </div>
+                    </div> */}
                 </div>
 
                 {/* Navigation */}
@@ -66,7 +66,7 @@ export default function AdminPage() {
                 {/* Footer */}
                 <div className={`p-4 border-t border-gray-600/30 transition-opacity duration-300 ease-in-out ${isSidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
                     <div className="text-xs text-blue-200 opacity-60 text-center">
-                        © 2024 Eventora Admin
+                        © 2025 Crystal Beauty Clear
                     </div>
                 </div>
             </div>
