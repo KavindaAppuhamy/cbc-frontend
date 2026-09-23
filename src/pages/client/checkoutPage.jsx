@@ -1,0 +1,15 @@
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import api, { getErrorMessage } from "../../utils/api";
+import { getCart, clearCart, cartTotal } from "../../utils/cart";
+import { getUser } from "../../utils/auth";
+
+export default function CheckoutPage() {
+  const navigate = useNavigate(); const user = getUser(); const [cart] = useState(getCart());
+  const [form,setForm]=useState({name:[user?.firstName,user?.lastName].filter(Boolean).join(' '),phone:'',address:''}); const [loading,setLoading]=useState(false);
+  useEffect(()=>{ if(!localStorage.getItem('token')) navigate('/login'); },[navigate]);
+  if(!cart.length) return <div className="max-w-3xl mx-auto px-6 py-20 text-center"><h1 className="font-display text-3xl font-bold mb-3">Nothing to checkout</h1><Link to="/products" className="text-accent-dark font-semibold">Browse products →</Link></div>;
+  const submit=async(e)=>{e.preventDefault(); if(!form.phone||!form.address){toast.error('Please provide your phone number and delivery address');return;} setLoading(true); try{const res=await api.post('/api/orders',{...form,products:cart.map(i=>({productId:i.productId,qty:i.quantity}))}); clearCart(); toast.success(`Order ${res.data.order.orderId} placed successfully`); navigate('/profile');}catch(err){toast.error(getErrorMessage(err,'Checkout failed. Please try again.'));}finally{setLoading(false)}};
+  return <div className="max-w-6xl mx-auto px-4 sm:px-8 py-10"><h1 className="font-display text-3xl sm:text-4xl font-bold mb-8">Checkout</h1><div className="grid lg:grid-cols-[1fr_360px] gap-8"><form onSubmit={submit} className="bg-white border border-accent/15 rounded-2xl p-6 sm:p-8 space-y-5"><h2 className="font-display text-2xl font-bold">Delivery Details</h2>{[['name','Full name'],['phone','Phone number'],['address','Delivery address']].map(([key,label])=><div key={key}><label className="block text-sm font-semibold mb-2">{label}</label>{key==='address'?<textarea value={form[key]} onChange={e=>setForm({...form,[key]:e.target.value})} rows="4" className="w-full rounded-xl border border-accent/25 px-4 py-3 outline-none focus:ring-2 focus:ring-accent/30" required/>:<input value={form[key]} onChange={e=>setForm({...form,[key]:e.target.value})} className="w-full rounded-xl border border-accent/25 px-4 py-3 outline-none focus:ring-2 focus:ring-accent/30" required/>}</div>)}<button disabled={loading} className="w-full bg-accent hover:bg-accent-dark text-white py-3.5 rounded-xl font-semibold disabled:opacity-60">{loading?'Placing Order...':'Place Order'}</button></form><div className="bg-secondary/70 rounded-2xl p-6 h-fit"><h2 className="font-display text-xl font-bold mb-5">Your Items</h2>{cart.map(i=><div key={i.productId} className="flex justify-between gap-3 py-2 text-sm"><span>{i.name} × {i.quantity}</span><span className="font-semibold">LKR {(i.price*i.quantity).toFixed(2)}</span></div>)}<div className="border-t border-accent/20 mt-4 pt-4 flex justify-between font-bold text-lg"><span>Total</span><span>LKR {cartTotal().toFixed(2)}</span></div></div></div></div>;
+}

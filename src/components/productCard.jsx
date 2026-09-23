@@ -1,166 +1,519 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { Link, useNavigate } from 'react-router-dom';
 import { BsStarFill, BsStar } from 'react-icons/bs';
-import { Link } from 'react-router-dom';
+import { ShoppingCart, Zap } from 'lucide-react';
+import toast from 'react-hot-toast';
+import api from '../utils/api';
+import { addToCart } from '../utils/cart';
 
+/* =========================================================
+   STAR RATING
+========================================================= */
 const StarRating = ({ rating = 0, totalReviews = 0 }) => {
-  const roundedRating = Math.round(rating); // ensure full star units
+  const roundedRating = Math.round(Number(rating) || 0);
 
   return (
-    <div className="flex items-center mb-2">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <span key={star} className="text-xl">
-          {star <= roundedRating ? (
-            <BsStarFill className="text-yellow-400" />
-          ) : (
-            <BsStar className="text-gray-300" />
-          )}
-        </span>
-      ))}
-      <span className="ml-2 text-sm text-gray-500">
-        {totalReviews > 0 ? `(${totalReviews} reviews)` : "(No reviews yet)"}
+    <div className="flex h-5 items-center gap-2">
+      <div className="flex items-center gap-[2px]">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <span
+            key={star}
+            className="flex h-3.5 w-3.5 items-center justify-center"
+          >
+            {star <= roundedRating ? (
+              <BsStarFill className="text-[12px] text-amber-400" />
+            ) : (
+              <BsStar className="text-[12px] text-gray-300" />
+            )}
+          </span>
+        ))}
+      </div>
+
+      <span className="truncate text-[11px] font-medium text-gray-500">
+        {totalReviews > 0
+          ? `${totalReviews} ${
+              totalReviews === 1 ? 'review' : 'reviews'
+            }`
+          : 'No reviews'}
       </span>
     </div>
   );
 };
 
+/* =========================================================
+   PRODUCT CARD
+========================================================= */
 export default function ProductCard({ product }) {
-  const [ratingStats, setRatingStats] = useState({ averageRating: 0, totalReviews: 0 });
+  const navigate = useNavigate();
+
+  const [ratingStats, setRatingStats] = useState({
+    averageRating: 0,
+    totalReviews: 0,
+  });
+
   const [loading, setLoading] = useState(true);
 
-  const discountPercentage = product?.labelledPrice > product?.price
-    ? Math.round(((product.labelledPrice - product.price) / product.labelledPrice) * 100)
-    : 0;
+  /* =======================================================
+     DISCOUNT
+  ======================================================= */
+  const discountPercentage =
+    product?.labelledPrice > product?.price
+      ? Math.round(
+          ((Number(product.labelledPrice) - Number(product.price)) /
+            Number(product.labelledPrice)) *
+            100
+        )
+      : 0;
 
+  /* =======================================================
+     REVIEWS
+  ======================================================= */
   useEffect(() => {
-    async function fetchRatingStats() {
-      try {
-        setLoading(true);
-        const res = await axios.get(`/api/reviews/stats/${product.productId}`);
-        setRatingStats(res.data);
-      } catch (err) {
-        console.error("Failed to load review stats", err);
-        // Set default values on error
-        setRatingStats({ averageRating: 0, totalReviews: 0 });
-      } finally {
-        setLoading(false);
-      }
+    let active = true;
+
+    if (!product?.productId) {
+      setLoading(false);
+      return;
     }
 
-    if (product?.productId) {
-      fetchRatingStats();
-    }
+    api
+      .get(`/api/reviews/stats/${product.productId}`)
+      .then((res) => {
+        if (active && res?.data) {
+          setRatingStats({
+            averageRating: Number(res.data.averageRating) || 0,
+            totalReviews: Number(res.data.totalReviews) || 0,
+          });
+        }
+      })
+      .catch(() => {
+        // Keep default rating values if request fails.
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
   }, [product?.productId]);
 
-  // Use product's embedded rating/totalReviews if available, otherwise use fetched stats
-  const displayRating = product?.rating !== undefined ? product.rating : ratingStats.averageRating;
-  const displayTotalReviews = product?.totalReviews !== undefined ? product.totalReviews : ratingStats.totalReviews;
+  /* =======================================================
+     AVAILABILITY
+  ======================================================= */
+  const available =
+    Boolean(product?.isAvailable) && Number(product?.stock) > 0;
 
+  /* =======================================================
+     ADD TO CART
+  ======================================================= */
+  const add = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!available) return;
+
+    addToCart(product, 1);
+
+    toast.success(`${product.name} added to cart`);
+  };
+
+  /* =======================================================
+     BUY NOW
+  ======================================================= */
+  const buy = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!available) return;
+
+    addToCart(product, 1);
+    navigate('/checkout');
+  };
+
+  /* =======================================================
+     DISPLAY RATING
+  ======================================================= */
+  const displayRating =
+    product?.rating !== undefined
+      ? Number(product.rating) || 0
+      : ratingStats.averageRating;
+
+  const displayTotalReviews =
+    product?.totalReviews !== undefined
+      ? Number(product.totalReviews) || 0
+      : ratingStats.totalReviews;
+
+  /* =======================================================
+     DESCRIPTION
+  ======================================================= */
+  const description = product?.description
+    ? product.description
+    : 'No description available';
+
+  /* =======================================================
+     RENDER
+  ======================================================= */
   return (
-    <Link to={"/overview/"+product.productId} className="w-[300px] h-[450px] flex flex-col bg-accent shadow-lg rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105 border border-gray-100 m-2 group">
-      {/* Image Container */}
-      <div className="relative h-56 bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden">
+    <Link
+      to={`/overview/${product.productId}`}
+      className="
+        group
+        flex
+        w-full
+        max-w-[310px]
+        flex-col
+        overflow-hidden
+        rounded-[22px]
+        border
+        border-gray-100
+        bg-white
+        shadow-[0_8px_30px_rgba(0,0,0,0.06)]
+        transition-all
+        duration-300
+        ease-out
+        hover:-translate-y-1
+        hover:border-gray-200
+        hover:shadow-[0_18px_45px_rgba(0,0,0,0.12)]
+      "
+    >
+      {/* ===================================================
+          PRODUCT IMAGE
+      =================================================== */}
+      <div
+        className="
+          relative
+          h-[210px]
+          w-full
+          shrink-0
+          overflow-hidden
+          bg-gradient-to-br
+          from-gray-50
+          via-gray-100
+          to-gray-200
+        "
+      >
         {product?.images?.length > 0 ? (
-          <img 
-            src={product.images[0]} 
-            alt={product.name || "Product"}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          <img
+            src={product.images[0]}
+            alt={product.name || 'Product'}
+            className="
+              h-full
+              w-full
+              object-cover
+              transition-transform
+              duration-700
+              ease-out
+              group-hover:scale-[1.045]
+            "
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-6xl text-gray-300">
+          <div className="flex h-full w-full items-center justify-center text-5xl text-gray-300">
             📱
           </div>
         )}
 
+        {/* Image overlay */}
+        <div
+          className="
+            pointer-events-none
+            absolute
+            inset-0
+            bg-gradient-to-t
+            from-black/10
+            via-transparent
+            to-transparent
+          "
+        />
+
+        {/* =================================================
+            DISCOUNT BADGE
+        ================================================= */}
         {discountPercentage > 0 && (
-          <div className="absolute top-3 left-3 bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+          <div
+            className="
+              absolute
+              left-3
+              top-3
+              rounded-full
+              bg-white/95
+              px-3
+              py-1.5
+              text-[11px]
+              font-bold
+              tracking-wide
+              text-red-600
+              shadow-sm
+              backdrop-blur-md
+            "
+          >
             {discountPercentage}% OFF
           </div>
         )}
 
-        <div className="absolute top-3 right-3">
-          {product?.isAvailable && product?.stock > 0 ? (
-            product.stock <= 5 ? (
-              <div className="bg-amber-500 text-white px-2 py-1 rounded-full text-xs font-semibold shadow-md">
-                Only {product.stock} left
-              </div>
-            ) : (
-              <div className="bg-emerald-500 text-white px-2 py-1 rounded-full text-xs font-semibold shadow-md">
-                ✓ In Stock
-              </div>
-            )
+        {/* =================================================
+            STOCK BADGE
+        ================================================= */}
+        <div className="absolute right-3 top-3">
+          {available ? (
+            <div
+              className={`
+                rounded-full
+                px-3
+                py-1.5
+                text-[11px]
+                font-semibold
+                text-white
+                shadow-sm
+                backdrop-blur-md
+                ${
+                  Number(product.stock) <= 5
+                    ? 'bg-amber-500/95'
+                    : 'bg-emerald-500/95'
+                }
+              `}
+            >
+              {Number(product.stock) <= 5
+                ? `Only ${product.stock} left`
+                : '✓ In Stock'}
+            </div>
           ) : (
-            <div className="bg-gray-400 text-white px-2 py-1 rounded-full text-xs font-semibold shadow-md">
+            <div
+              className="
+                rounded-full
+                bg-gray-700/90
+                px-3
+                py-1.5
+                text-[11px]
+                font-semibold
+                text-white
+                shadow-sm
+                backdrop-blur-md
+              "
+            >
               Sold Out
             </div>
           )}
         </div>
       </div>
 
-      {/* Product Details */}
-      <div className="flex flex-col flex-1 p-5 bg-primary">
-        <h3 className="font-bold text-gray-900 text-lg mb-2 leading-tight">
-          {product?.name || "Unnamed Product"}
-        </h3>
+      {/* ===================================================
+          PRODUCT INFORMATION
+      =================================================== */}
+      <div
+        className="
+          flex
+          min-h-[260px]
+          flex-1
+          flex-col
+          px-5
+          pb-5
+          pt-4
+        "
+      >
+        {/* =================================================
+            PRODUCT NAME
+        ================================================= */}
+        <div className="h-[46px] shrink-0 overflow-hidden">
+          <h3
+            className="
+              line-clamp-2
+              text-[17px]
+              font-semibold
+              leading-[1.35]
+              tracking-[-0.01em]
+              text-gray-900
+              transition-colors
+              duration-200
+              group-hover:text-gray-700
+            "
+          >
+            {product?.name || 'Unnamed Product'}
+          </h3>
+        </div>
 
-        {loading ? (
-          <div className="flex items-center mb-2">
-            <div className="text-sm text-gray-400">Loading reviews...</div>
-          </div>
-        ) : (
-          <StarRating 
-            rating={displayRating} 
-            totalReviews={displayTotalReviews} 
-          />
-        )}
+        {/* =================================================
+            RATING
+        ================================================= */}
+        <div className="mt-1 h-[25px] shrink-0">
+          {loading ? (
+            <div className="flex h-5 items-center text-[11px] text-gray-400">
+              Loading reviews...
+            </div>
+          ) : (
+            <StarRating
+              rating={displayRating}
+              totalReviews={displayTotalReviews}
+            />
+          )}
+        </div>
 
-        <p className="text-gray-600 text-sm leading-relaxed mb-4 flex-1">
-          {product?.description?.length > 80 
-            ? product.description.substring(0, 80) + "..."
-            : product?.description || "No description available"}
-        </p>
+        {/* =================================================
+            DESCRIPTION
+        ================================================= */}
+        <div className="mt-2 h-[56px] shrink-0 overflow-hidden">
+          <p
+            className="
+              line-clamp-3
+              text-[13px]
+              leading-[1.45]
+              text-gray-500
+            "
+          >
+            {description}
+          </p>
+        </div>
 
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-baseline space-x-2">
-            <span className="text-2xl font-bold text-gray-900">
-              LKR {product?.price?.toFixed(2) || "0.00"}
+        {/* =================================================
+            FLEXIBLE SPACE
+        ================================================= */}
+        <div className="min-h-[18px] flex-1" />
+
+        {/* =================================================
+            PRICE
+        ================================================= */}
+        <div className="flex min-h-[42px] shrink-0 items-center">
+          <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
+            <span
+              className="
+                whitespace-nowrap
+                text-[20px]
+                font-bold
+                tracking-tight
+                text-gray-900
+              "
+            >
+              LKR {Number(product?.price || 0).toFixed(2)}
             </span>
+
             {discountPercentage > 0 && (
-              <span className="text-sm text-gray-400 line-through font-medium">
-                LKR {product?.labelledPrice?.toFixed(2)}
+              <span
+                className="
+                  whitespace-nowrap
+                  text-xs
+                  font-medium
+                  text-gray-400
+                  line-through
+                "
+              >
+                LKR {Number(product.labelledPrice).toFixed(2)}
               </span>
             )}
           </div>
         </div>
 
-        <div className="flex space-x-2">
-          <button 
-            className={`flex-1 py-2.5 px-3 rounded-lg font-semibold text-sm transition-all duration-300 ${
-              product?.isAvailable && product?.stock > 0
-                ? 'bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 hover:border-gray-400'
-                : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
-            }`}
-            disabled={!product?.isAvailable || product?.stock <= 0}
+        {/* =================================================
+            ACTION BUTTONS
+        ================================================= */}
+        <div
+          className="
+            mt-3
+            grid
+            min-h-[42px]
+            grid-cols-2
+            gap-2.5
+          "
+        >
+          {/* ADD TO CART */}
+          <button
+            type="button"
+            onClick={add}
+            disabled={!available}
+            className={`
+              flex
+              h-[42px]
+              min-w-0
+              items-center
+              justify-center
+              gap-1.5
+              rounded-xl
+              border
+              px-2.5
+              text-xs
+              font-semibold
+              transition-all
+              duration-200
+              ${
+                available
+                  ? `
+                    border-gray-200
+                    bg-gray-50
+                    text-gray-800
+                    hover:border-gray-300
+                    hover:bg-gray-100
+                    active:scale-[0.98]
+                  `
+                  : `
+                    cursor-not-allowed
+                    border-gray-100
+                    bg-gray-100
+                    text-gray-400
+                  `
+              }
+            `}
           >
-            {product?.isAvailable && product?.stock > 0 
-              ? '🛒 Add to Cart' 
-              : '❌ Unavailable'}
+            <ShoppingCart
+              size={15}
+              strokeWidth={2}
+              className="shrink-0"
+            />
+
+            <span className="truncate whitespace-nowrap">
+              {available ? 'Add to Cart' : 'Unavailable'}
+            </span>
           </button>
 
-          <button 
-            className={`flex-1 py-2.5 px-3 rounded-lg font-semibold text-sm transition-all duration-300 transform ${
-              product?.isAvailable && product?.stock > 0
-                ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:scale-95'
-                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-            }`}
-            disabled={!product?.isAvailable || product?.stock <= 0}
+          {/* BUY NOW */}
+          <button
+            type="button"
+            onClick={buy}
+            disabled={!available}
+            className={`
+              flex
+              h-[42px]
+              min-w-0
+              items-center
+              justify-center
+              gap-1.5
+              rounded-xl
+              px-2.5
+              text-xs
+              font-semibold
+              transition-all
+              duration-200
+              ${
+                available
+                  ? `
+                    bg-accent
+                    text-white
+                    shadow-[0_6px_18px_rgba(0,0,0,0.12)]
+                    hover:bg-accent-dark
+                    hover:shadow-[0_8px_22px_rgba(0,0,0,0.16)]
+                    active:scale-[0.98]
+                  `
+                  : `
+                    cursor-not-allowed
+                    bg-gray-200
+                    text-gray-500
+                  `
+              }
+            `}
           >
-            {product?.isAvailable && product?.stock > 0 
-              ? '⚡ Buy Now' 
-              : '❌ Unavailable'}
+            <Zap
+              size={15}
+              strokeWidth={2.2}
+              className="shrink-0"
+            />
+
+            <span className="truncate whitespace-nowrap">
+              {available ? 'Buy Now' : 'Unavailable'}
+            </span>
           </button>
         </div>
       </div>
     </Link>
   );
 }
+

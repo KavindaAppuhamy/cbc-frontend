@@ -1,10 +1,76 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swa');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
-@theme{
-    --color-primary: #F9F8F6;
-    --color-secondary: #EFE9E3;
-    --color-accent: #D9CFC7;
-    --color-background: #C9B59C;
-    --font-fancy: 'Roboto', sans-serif;
+@theme {
+    /* Elegant neutral + gold-accent palette */
+    --color-primary: #FBFAF8;
+    --color-secondary: #F3EEE7;
+    --color-accent: #C6A664;
+    --color-accent-dark: #9C7B3F;
+    --color-background: #EFE7DA;
+    --color-ink: #1C1B19;
+    --color-ink-soft: #4A4740;
+
+    /* Admin dark theme */
+    --color-admin-900: #0B1220;
+    --color-admin-800: #101A2C;
+    --color-admin-700: #16233A;
+
+    --font-fancy: 'Playfair Display', serif;
+    --font-sans: 'Inter', sans-serif;
 }
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font-sans);
+    color: var(--color-ink);
+    -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+}
+
+h1, h2, h3, .font-display {
+    font-family: var(--font-fancy);
+}
+
+/* Thin, elegant scrollbars for the admin data tables etc. */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #C6A664;
+    border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #C6A664;
+}
+
+/* Safe-area support for iOS notches/home indicators on fixed nav bars */
+.safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+}
+.safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in-down {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fade-in 0.6s ease-out both; }
+.animate-fade-in-up { animation: fade-in-up 0.6s ease-out both; }
+.animate-fade-in-down { animation: fade-in-down 0.6s ease-out both; }

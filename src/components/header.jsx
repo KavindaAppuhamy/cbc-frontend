@@ -1,42 +1,8 @@
-import { Link, useNavigate } from "react-router-dom";
-import UserData from "./userData";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Menu, X, User, LogOut, ShoppingCart } from "lucide-react";
+import { isLoggedIn, logout, getUser } from "../utils/auth";
+import { cartCount } from "../utils/cart";
 
-export default function Header() {
-  const navigate = useNavigate();
-  console.log("Header component loaded");
-
-  return (
-    <header className="w-full h-[80px] shadow-2xl flex items-center justify-between bg-secondary px-6">
-      {/* Logo Section */}
-      <div
-        className="flex items-center cursor-pointer"
-        onClick={() => navigate("/")}
-      >
-        <img
-          src="/Logo.png"
-          alt="Logo"
-          className="w-[100px] h-[100px] object-contain"
-        />
-      </div>
-
-      {/* Navigation Links */}
-      <nav className="flex items-center justify-center space-x-6">
-        <Link to="/" className="text-[18px] font-bold hover:text-accent">
-          Home
-        </Link>
-        <Link to="/products" className="text-[18px] font-bold hover:text-accent">
-          Products
-        </Link>
-        <Link to="/about" className="text-[18px] font-bold hover:text-accent">
-          About
-        </Link>
-        <Link to="/contact" className="text-[18px] font-bold hover:text-accent">
-          Contact
-        </Link>
-      </nav>
-
-      {/* Right Section (User / Icons etc.) */}
-      <div className="w-[60px] h-full flex justify-center items-center bg-accent rounded-l-lg"></div>
-    </header>
-  );
-}
+const NAV_LINKS=[{to:"/",label:"Home"},{to:"/products",label:"Products"},{to:"/about",label:"About"},{to:"/contact",label:"Contact"}];
+export default function Header(){const navigate=useNavigate(),location=useLocation();const [menuOpen,setMenuOpen]=useState(false),[loggedIn,setLoggedIn]=useState(isLoggedIn()),[count,setCount]=useState(cartCount());const user=getUser();useEffect(()=>{setMenuOpen(false);setLoggedIn(isLoggedIn())},[location.pathname]);useEffect(()=>{const s=()=>setCount(cartCount());window.addEventListener('cbc-cart-updated',s);return()=>window.removeEventListener('cbc-cart-updated',s)},[]);const handleLogout=()=>{logout();setLoggedIn(false);navigate('/')};const active=p=>p==='/'?location.pathname==='/':location.pathname.startsWith(p);return <header className="w-full sticky top-0 z-40 safe-top bg-primary/95 backdrop-blur-md shadow-sm border-b border-accent/20"><div className="max-w-7xl mx-auto h-16 sm:h-20 flex items-center justify-between px-4 sm:px-6 lg:px-8"><Link to="/" className="shrink-0"><img src="/Logo.png" alt="Crystal Beauty Clear" className="h-10 sm:h-12 w-auto object-contain"/></Link><nav className="hidden md:flex items-center gap-8">{NAV_LINKS.map(l=><Link key={l.to} to={l.to} className={`text-[15px] font-semibold ${active(l.to)?'text-accent-dark':'text-ink-soft hover:text-accent-dark'}`}>{l.label}</Link>)}</nav><div className="hidden md:flex items-center gap-3"><Link to="/cart" className="relative p-2 text-ink hover:text-accent-dark" title="Cart"><ShoppingCart size={20}/>{count>0&&<span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-accent text-white text-[10px] flex items-center justify-center font-bold">{count}</span>}</Link>{loggedIn?<><Link to="/profile" className="flex items-center gap-1.5 text-sm font-medium text-ink-soft hover:text-accent-dark"><User size={16}/>{user?.firstName||'Profile'}</Link><button onClick={handleLogout} className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-full border border-accent/40 hover:bg-accent hover:text-white"><LogOut size={15}/>Logout</button></>:<><Link to="/login" className="text-sm font-semibold px-4 py-2">Log In</Link><Link to="/signup" className="text-sm font-semibold px-5 py-2.5 rounded-full bg-accent text-white">Sign Up</Link></>}</div><button className="md:hidden p-2 text-ink" onClick={()=>setMenuOpen(v=>!v)}>{menuOpen?<X size={26}/>:<Menu size={26}/>}</button></div><div className={`md:hidden overflow-hidden transition-all bg-primary border-t border-accent/20 ${menuOpen?'max-h-[560px]':'max-h-0'}`}><nav className="flex flex-col px-6 py-4 gap-1">{NAV_LINKS.map(l=><Link key={l.to} to={l.to} className={`py-3 text-base font-semibold border-b border-accent/10 ${active(l.to)?'text-accent-dark':'text-ink-soft'}`}>{l.label}</Link>)}<Link to="/cart" className="flex items-center gap-2 py-3 font-semibold text-ink-soft"><ShoppingCart size={18}/> Cart {count>0&&`(${count})`}</Link>{loggedIn?<><Link to="/profile" className="flex items-center gap-2 py-3 font-semibold text-ink-soft"><User size={18}/> Profile</Link><button onClick={handleLogout} className="flex items-center justify-center gap-2 text-sm font-semibold px-4 py-3 rounded-xl border border-accent/40"><LogOut size={16}/>Logout</button></>:<><Link to="/login" className="text-center text-sm font-semibold px-4 py-3 rounded-xl border border-accent/40">Log In</Link><Link to="/signup" className="text-center text-sm font-semibold px-4 py-3 rounded-xl bg-accent text-white">Sign Up</Link></>}</nav></div></header>}

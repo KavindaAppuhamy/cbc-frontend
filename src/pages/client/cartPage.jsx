@@ -1,0 +1,14 @@
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
+import toast from "react-hot-toast";
+import { getCart, updateCartQuantity, removeFromCart, cartTotal } from "../../utils/cart";
+
+export default function CartPage() {
+  const [cart, setCart] = useState(getCart());
+  const navigate = useNavigate();
+  useEffect(() => { const sync = () => setCart(getCart()); window.addEventListener("cbc-cart-updated", sync); return () => window.removeEventListener("cbc-cart-updated", sync); }, []);
+  const total = cartTotal();
+  if (!cart.length) return <div className="max-w-4xl mx-auto px-6 py-20 text-center"><ShoppingBag size={50} className="mx-auto text-accent mb-4"/><h1 className="font-display text-3xl font-bold mb-3">Your cart is empty</h1><p className="text-ink-soft mb-6">Add some products and they will appear here.</p><Link to="/products" className="inline-block bg-accent text-white px-7 py-3 rounded-full font-semibold">Continue Shopping</Link></div>;
+  return <div className="max-w-6xl mx-auto px-4 sm:px-8 py-10"><h1 className="font-display text-3xl sm:text-4xl font-bold mb-8">Shopping Cart</h1><div className="grid lg:grid-cols-[1fr_360px] gap-6"><div className="space-y-3">{cart.map(item => <div key={item.productId} className="bg-white rounded-2xl border border-accent/15 p-4 flex gap-4 items-center"><img src={item.images?.[0]} alt={item.name} className="w-20 h-20 rounded-xl object-cover bg-secondary"/><div className="flex-1"><h2 className="font-semibold text-ink">{item.name}</h2><p className="text-accent-dark font-bold mt-1">LKR {item.price.toFixed(2)}</p><div className="flex items-center gap-2 mt-3"><button onClick={() => setCart(updateCartQuantity(item.productId, item.quantity - 1))} className="w-8 h-8 rounded-full border"><Minus size={14} className="mx-auto"/></button><span className="w-7 text-center">{item.quantity}</span><button onClick={() => setCart(updateCartQuantity(item.productId, item.quantity + 1))} className="w-8 h-8 rounded-full border"><Plus size={14} className="mx-auto"/></button></div></div><button onClick={() => { removeFromCart(item.productId); setCart(getCart()); toast.success("Removed from cart"); }} className="text-red-500 p-2"><Trash2 size={18}/></button></div>)}</div><div className="bg-secondary/70 rounded-2xl p-6 h-fit sticky top-24"><h2 className="font-display text-xl font-bold mb-5">Order Summary</h2><div className="flex justify-between text-ink-soft mb-3"><span>Items</span><span>{cart.reduce((s,i)=>s+i.quantity,0)}</span></div><div className="flex justify-between text-lg font-bold border-t border-accent/20 pt-4"><span>Total</span><span>LKR {total.toFixed(2)}</span></div><button onClick={() => navigate('/checkout')} className="w-full mt-6 bg-accent hover:bg-accent-dark text-white py-3.5 rounded-xl font-semibold">Checkout</button></div></div></div>;
+}

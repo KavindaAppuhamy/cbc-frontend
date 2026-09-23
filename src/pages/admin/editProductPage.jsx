@@ -1,241 +1,453 @@
-import { use, useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import mediaUpload from "../../utils/mediaUpload";
 import toast from "react-hot-toast";
-import axios from "axios";
-import { Package, Upload, DollarSign, Hash, FileText, Tag, Image, BarChart3, Info } from "lucide-react"; // Added Info icon for description placeholder hint
+import api, { getErrorMessage } from "../../utils/api";
+import {
+    Package,
+    DollarSign,
+    Hash,
+    FileText,
+    Tag,
+    BarChart3,
+    Info,
+    ArrowLeft,
+    Save,
+    Image as ImageIcon,
+} from "lucide-react";
+import MultiImagePicker from "../../components/multiImagePicker";
 
 export default function EditProductPage() {
     const location = useLocation();
-    const [productId, setProductId] = useState(location.state.productId);
-    const [name, setName] = useState(location.state.name);
-    const [altNames, setAltNames] = useState(location.state.altNames.join(", ")); 
-    const [description, setDescription] = useState(location.state.description);
-    const [images, setImages] = useState([]);
-    const [labelledPrice, setLabelledPrice] = useState(location.state.labelledPrice || 0); 
-    const [price, setPrice] = useState(location.state.price);
-    const [stock, setStock] = useState(location.state.stock);
-    const [currentImages, setCurrentImages] = useState(location.state.images);
     const navigate = useNavigate();
-    
-    console.log(location);
+    const incoming = location.state || {};
+
+    const [productId, setProductId] = useState(incoming.productId || "");
+    const [name, setName] = useState(incoming.name || "");
+    const [altNames, setAltNames] = useState(
+        (incoming.altNames || []).join(", ")
+    );
+    const [description, setDescription] = useState(
+        incoming.description || ""
+    );
+    const [images, setImages] = useState(incoming.images || []);
+    const [labelledPrice, setLabelledPrice] = useState(
+        incoming.labelledPrice || 0
+    );
+    const [price, setPrice] = useState(incoming.price || 0);
+    const [stock, setStock] = useState(incoming.stock || 0);
+
+    useEffect(() => {
+        if (!location.state) {
+            navigate("/admin/products", { replace: true });
+        }
+    }, [location.state, navigate]);
 
     async function updateProduct() {
-    const token = localStorage.getItem("token");
-    if (!token) {
-        toast.error("Please login first");
-        return;
-    }
+        const token = localStorage.getItem("token");
 
-    let imageUrls = currentImages;  
-
-    try {
-        // Upload new images only if selected
-        if (images.length > 0) {
-            const uploads = images.map(img => mediaUpload(img));
-            imageUrls = await Promise.all(uploads);
-            setCurrentImages(imageUrls);
+        if (!token) {
+            toast.error("Please login first");
+            return;
         }
 
-        const altNamesArray = Array.isArray(altNames)
-            ? altNames.map(a => a.trim())
-            : altNames.split(",").map(a => a.trim());
+        let imageUrls = [];
 
-        const product = {
-            productId,
-            name,
-            altNames: altNamesArray,
-            description,
-            images: imageUrls,
-            labelledPrice: Number(labelledPrice),
-            price: Number(price),
-            stock: Number(stock),
-        };
+        try {
+            const uploaded = [];
 
-        await axios.put(
-            `${import.meta.env.VITE_BACKEND_URL}/api/products/${productId}`,
-            product,
-            { headers: { Authorization: "Bearer " + token } }
-        );
+            for (const item of images) {
+                if (typeof item === "string") {
+                    uploaded.push(item);
+                } else {
+                    uploaded.push(await mediaUpload(item));
+                }
+            }
 
-        toast.success("Product updated successfully!");
+            imageUrls = uploaded;
 
-        setTimeout(() => {
-            navigate("/admin/products");
-        }, 600);
+            if (!imageUrls.length) {
+                toast.error("Please keep at least one product image.");
+                return;
+            }
 
-    } catch (error) {
-        toast.error(error?.response?.data?.message || "Update failed");
+            const altNamesArray = Array.isArray(altNames)
+                ? altNames.map((a) => a.trim()).filter(Boolean)
+                : altNames
+                      .split(",")
+                      .map((a) => a.trim())
+                      .filter(Boolean);
+
+            const product = {
+                productId: productId.trim(),
+                name: name.trim(),
+                altNames: altNamesArray,
+                description: description.trim(),
+                images: imageUrls,
+                labelledPrice: Number(labelledPrice),
+                price: Number(price),
+                stock: Number(stock),
+            };
+
+            await api.put(`/api/products/${productId}`, product);
+
+            toast.success("Product updated successfully!");
+
+            setTimeout(() => {
+                navigate("/admin/products");
+            }, 600);
+        } catch (error) {
+            toast.error(getErrorMessage(error, "Update failed"));
+        }
     }
-}
+
+    const inputClass =
+        "w-full h-12 rounded-xl border border-slate-200 bg-slate-50/80 px-4 text-sm text-slate-900 outline-none transition-all duration-200 placeholder:text-slate-400 hover:border-slate-300 focus:border-slate-900 focus:bg-white focus:ring-4 focus:ring-slate-900/5 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500";
+
+    const textareaClass =
+        "w-full min-h-[140px] rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3.5 text-sm leading-6 text-slate-900 outline-none transition-all duration-200 placeholder:text-slate-400 hover:border-slate-300 focus:border-slate-900 focus:bg-white focus:ring-4 focus:ring-slate-900/5 resize-y";
+
+    const labelClass =
+        "mb-2 flex items-center gap-2 text-[13px] font-semibold text-slate-700";
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-12 px-4 font-sans antialiased">
-            <div className="max-w-2xl mx-auto">
-                {/* Header */}
-                <div className="text-center mb-10">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-700 rounded-3xl mb-6 shadow-xl animate-fade-in-down">
-                        <Package className="w-9 h-9 text-white" />
+        <div className="min-h-screen bg-[#f6f8fb] px-4 py-6 font-sans text-slate-900 sm:px-6 lg:px-8 lg:py-10">
+            <div className="mx-auto max-w-6xl">
+
+                {/* =====================================================
+                    HEADER
+                ====================================================== */}
+                <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm">
+                            <Package className="h-3.5 w-3.5" />
+                            Product Management
+                        </div>
+
+                        <h1 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+                            Edit Product
+                        </h1>
+
+                        <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500 sm:text-base">
+                            Update product information, images, pricing and
+                            inventory from one place.
+                        </p>
                     </div>
-                    <h1 className="text-4xl sm:text-5xl font-extrabold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent leading-tight mb-3 animate-fade-in-up">
-                        Edit Product
-                    </h1>
-                    <p className="text-gray-600 text-lg max-w-md mx-auto animate-fade-in">Craft compelling listings for your inventory effortlessly.</p>
+
+                    <Link
+                        to="/admin/products"
+                        className="inline-flex h-11 items-center justify-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md sm:self-auto"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                        Back to Products
+                    </Link>
                 </div>
 
-                {/* Form Card */}
-                <div className="bg-white/75 backdrop-blur-md rounded-3xl shadow-2xl border border-white/30 p-8 sm:p-10 transform transition-all duration-300 hover:shadow-3xl hover:-translate-y-1">
-                    <div className="space-y-7"> {/* Increased spacing */}
-                        {/* Product ID */}
-                        <div className="group">
-                            <label className="flex items-center text-sm font-semibold text-gray-700 mb-2.5 transition-colors duration-200 group-focus-within:text-blue-700">
-                                <Hash className="w-4 h-4 mr-2 text-blue-500 group-focus-within:text-blue-700 transition-colors duration-200" />
-                                Product ID
-                            </label>
-                            <input
-                                type="text"
-                                disabled
-                                placeholder="Enter a unique product identifier (e.g., SKU-001)"
-                                className="w-full px-4 py-3.5 rounded-2xl border border-gray-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-200/50 transition-all duration-200 bg-white/70 backdrop-blur-sm text-gray-900 placeholder-gray-500 text-base"
-                                value={productId}
-                                onChange={(e) => { setProductId(e.target.value); }}
-                            />
-                        </div>
+                {/* =====================================================
+                    MAIN FORM
+                ====================================================== */}
+                <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_20px_60px_-25px_rgba(15,23,42,0.20)]">
 
-                        {/* Product Name */}
-                        <div className="group">
-                            <label className="flex items-center text-sm font-semibold text-gray-700 mb-2.5 transition-colors duration-200 group-focus-within:text-green-700">
-                                <Tag className="w-4 h-4 mr-2 text-green-500 group-focus-within:text-green-700 transition-colors duration-200" />
-                                Product Name
-                            </label>
-                            <input
-                                type="text"
-                                placeholder="Clearly describe the product"
-                                className="w-full px-4 py-3.5 rounded-2xl border border-gray-200 focus:border-green-600 focus:ring-4 focus:ring-green-200/50 transition-all duration-200 bg-white/70 backdrop-blur-sm text-gray-900 placeholder-gray-500 text-base"
-                                value={name}
-                                onChange={(e) => { setName(e.target.value); }}
-                            />
-                        </div>
+                    {/* Top Accent */}
+                    <div className="h-1 bg-gradient-to-r from-slate-900 via-slate-700 to-slate-400" />
 
-                        {/* Alternative Names */}
-                        <div className="group">
-                            <label className="flex items-center text-sm font-semibold text-gray-700 mb-2.5 transition-colors duration-200 group-focus-within:text-purple-700">
-                                <FileText className="w-4 h-4 mr-2 text-purple-500 group-focus-within:text-purple-700 transition-colors duration-200" />
-                                Alternative Names
-                            </label>
-                            <input
-                                type="text"
-                                placeholder="e.g., shoe, sneaker, kicks (comma-separated)"
-                                className="w-full px-4 py-3.5 rounded-2xl border border-gray-200 focus:border-purple-600 focus:ring-4 focus:ring-purple-200/50 transition-all duration-200 bg-white/70 backdrop-blur-sm text-gray-900 placeholder-gray-500 text-base"
-                                value={Array.isArray(altNames) ? altNames.join(", ") : altNames} // Ensure it always displays joined strings
-                                onChange={(e) => { setAltNames(e.target.value.split(",").map(s => s.trim())); }}
-                            />
-                        </div>
+                    <div className="p-5 sm:p-7 lg:p-9">
 
-                        {/* Description */}
-                        <div className="group">
-                            <label className="flex items-center text-sm font-semibold text-gray-700 mb-2.5 transition-colors duration-200 group-focus-within:text-indigo-700">
-                                <Info className="w-4 h-4 mr-2 text-indigo-500 group-focus-within:text-indigo-700 transition-colors duration-200" />
-                                Product Description
-                            </label>
-                            <textarea // Changed to textarea for better multi-line input
-                                placeholder="Provide a detailed description of the product features, benefits, and specifications."
-                                className="w-full px-4 py-3.5 rounded-2xl border border-gray-200 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-200/50 transition-all duration-200 bg-white/70 backdrop-blur-sm text-gray-900 placeholder-gray-500 text-base h-32 resize-y" // Increased height
-                                value={description}
-                                onChange={(e) => { setDescription(e.target.value); }}
-                            ></textarea>
-                        </div>
+                        {/* =================================================
+                            BASIC INFORMATION
+                        ================================================== */}
+                        <section>
+                            <div className="mb-6 flex items-start gap-4">
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white shadow-lg shadow-slate-900/10">
+                                    <Package className="h-5 w-5" />
+                                </div>
 
-                        {/* Image Upload */}
-                        <div className="group">
-                            <label className="flex items-center text-sm font-semibold text-gray-700 mb-2.5 transition-colors duration-200 group-focus-within:text-pink-700">
-                                <Image className="w-4 h-4 mr-2 text-pink-500 group-focus-within:text-pink-700 transition-colors duration-200" />
-                                Product Images
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type="file"
-                                    multiple
-                                    className="w-full px-4 py-3 rounded-2xl border-2 border-dashed border-gray-300 focus:border-pink-600 focus:ring-4 focus:ring-pink-200/50 transition-all duration-200 bg-white/30 backdrop-blur-sm text-gray-900
-                                            file:mr-4 file:py-2.5 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-pink-100 file:text-pink-700 hover:file:bg-pink-200 cursor-pointer"
-                                    onChange={(e) => setImages(Array.from(e.target.files))}
-                                />
-                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                                    <Upload className="w-5 h-5 text-gray-400" />
+                                <div>
+                                    <h2 className="text-lg font-bold text-slate-900">
+                                        Basic Information
+                                    </h2>
+
+                                    <p className="mt-1 text-sm text-slate-500">
+                                        Update the information customers see
+                                        about this product.
+                                    </p>
                                 </div>
                             </div>
-                            {images.length > 0 && (
-                                <p className="text-xs text-gray-500 mt-1.5 ml-0.5">
-                                    Selected: {Array.from(images).map(file => file.name).join(', ')}
-                                </p>
-                            )}
-                            <p className="text-xs text-gray-500 mt-1.5 ml-0.5">
-                                Upload high-quality images (JPG, PNG, up to 5MB each)
-                            </p>
-                        </div>
 
-                        {/* Pricing Section */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="group">
-                                <label className="flex items-center text-sm font-semibold text-gray-700 mb-2.5 transition-colors duration-200 group-focus-within:text-orange-700">
-                                    <DollarSign className="w-4 h-4 mr-2 text-orange-500 group-focus-within:text-orange-700 transition-colors duration-200" />
-                                    Labelled Price (Optional)
-                                </label>
-                                <input
-                                    type="number"
-                                    placeholder="e.g., 99.99"
-                                    className="w-full px-4 py-3.5 rounded-2xl border border-gray-200 focus:border-orange-600 focus:ring-4 focus:ring-orange-200/50 transition-all duration-200 bg-white/70 backdrop-blur-sm text-gray-900 placeholder-gray-500 text-base"
-                                    value={labelledPrice}
-                                    onChange={(e) => { setLabelledPrice(e.target.value); }}
-                                />
+                            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+
+                                {/* Product ID */}
+                                <div>
+                                    <label className={labelClass}>
+                                        <Hash className="h-4 w-4 text-slate-400" />
+                                        Product ID
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        disabled
+                                        value={productId}
+                                        className={inputClass}
+                                    />
+
+                                    <p className="mt-2 text-xs text-slate-400">
+                                        Product ID cannot be changed.
+                                    </p>
+                                </div>
+
+                                {/* Product Name */}
+                                <div>
+                                    <label className={labelClass}>
+                                        <Tag className="h-4 w-4 text-slate-400" />
+                                        Product Name
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        placeholder="Enter product name"
+                                        className={inputClass}
+                                        value={name}
+                                        onChange={(e) =>
+                                            setName(e.target.value)
+                                        }
+                                    />
+                                </div>
+
+                                {/* Alternative Names */}
+                                <div className="md:col-span-2">
+                                    <label className={labelClass}>
+                                        <FileText className="h-4 w-4 text-slate-400" />
+                                        Alternative Names
+                                        <span className="font-normal text-slate-400">
+                                            Optional
+                                        </span>
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. sneaker, kicks, running shoe"
+                                        className={inputClass}
+                                        value={
+                                            Array.isArray(altNames)
+                                                ? altNames.join(", ")
+                                                : altNames
+                                        }
+                                        onChange={(e) =>
+                                            setAltNames(
+                                                e.target.value
+                                                    .split(",")
+                                                    .map((s) => s.trim())
+                                            )
+                                        }
+                                    />
+
+                                    <p className="mt-2 text-xs text-slate-400">
+                                        Separate multiple names using commas.
+                                    </p>
+                                </div>
+
+                                {/* Description */}
+                                <div className="md:col-span-2">
+                                    <label className={labelClass}>
+                                        <Info className="h-4 w-4 text-slate-400" />
+                                        Product Description
+                                    </label>
+
+                                    <textarea
+                                        placeholder="Describe the product features, benefits, specifications and other useful information..."
+                                        className={textareaClass}
+                                        value={description}
+                                        onChange={(e) =>
+                                            setDescription(e.target.value)
+                                        }
+                                    />
+
+                                    <div className="mt-2 flex justify-between text-xs text-slate-400">
+                                        <span>
+                                            Keep the description clear and
+                                            useful for customers.
+                                        </span>
+
+                                        <span>
+                                            {description.length} characters
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Divider */}
+                        <div className="my-9 border-t border-slate-100" />
+
+                        {/* =================================================
+                            PRODUCT IMAGES
+                        ================================================== */}
+                        <section>
+                            <div className="mb-6 flex items-start gap-4">
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                                    <ImageIcon className="h-5 w-5" />
+                                </div>
+
+                                <div>
+                                    <h2 className="text-lg font-bold text-slate-900">
+                                        Product Images
+                                    </h2>
+
+                                    <p className="mt-1 text-sm text-slate-500">
+                                        Manage existing images and add new
+                                        product images.
+                                    </p>
+                                </div>
                             </div>
 
-                            <div className="group">
-                                <label className="flex items-center text-sm font-semibold text-gray-700 mb-2.5 transition-colors duration-200 group-focus-within:text-emerald-700">
-                                    <DollarSign className="w-4 h-4 mr-2 text-emerald-500 group-focus-within:text-emerald-700 transition-colors duration-200" />
-                                    Selling Price
-                                </label>
-                                <input
-                                    type="number"
-                                    placeholder="e.g., 79.99"
-                                    className="w-full px-4 py-3.5 rounded-2xl border border-gray-200 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-200/50 transition-all duration-200 bg-white/70 backdrop-blur-sm text-gray-900 placeholder-gray-500 text-base"
-                                    value={price}
-                                    onChange={(e) => { setPrice(e.target.value); }}
+                            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-4 sm:p-6">
+                                <MultiImagePicker
+                                    value={images}
+                                    onChange={setImages}
+                                    existing
                                 />
+
+                                <div className="mt-4 flex flex-col gap-2 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">
+                                    <span className="flex items-center gap-2">
+                                        <Info className="h-3.5 w-3.5" />
+                                        Keep at least one product image.
+                                    </span>
+
+                                    <span>
+                                        The first image becomes the main
+                                        product image.
+                                    </span>
+                                </div>
                             </div>
-                        </div>
+                        </section>
 
-                        {/* Stock */}
-                        <div className="group">
-                            <label className="flex items-center text-sm font-semibold text-gray-700 mb-2.5 transition-colors duration-200 group-focus-within:text-cyan-700">
-                                <BarChart3 className="w-4 h-4 mr-2 text-cyan-500 group-focus-within:text-cyan-700 transition-colors duration-200" />
-                                Stock Quantity
-                            </label>
-                            <input
-                                type="number"
-                                placeholder="e.g., 150"
-                                className="w-full px-4 py-3.5 rounded-2xl border border-gray-200 focus:border-cyan-600 focus:ring-4 focus:ring-cyan-200/50 transition-all duration-200 bg-white/70 backdrop-blur-sm text-gray-900 placeholder-gray-500 text-base"
-                                value={stock}
-                                onChange={(e) => { setStock(e.target.value); }}
-                            />
+                        {/* Divider */}
+                        <div className="my-9 border-t border-slate-100" />
+
+                        {/* =================================================
+                            PRICING & INVENTORY
+                        ================================================== */}
+                        <section>
+                            <div className="mb-6 flex items-start gap-4">
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                                    <DollarSign className="h-5 w-5" />
+                                </div>
+
+                                <div>
+                                    <h2 className="text-lg font-bold text-slate-900">
+                                        Pricing & Inventory
+                                    </h2>
+
+                                    <p className="mt-1 text-sm text-slate-500">
+                                        Update pricing and current inventory
+                                        availability.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+
+                                {/* Labelled Price */}
+                                <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4">
+                                    <label className={labelClass}>
+                                        <DollarSign className="h-4 w-4 text-slate-400" />
+                                        Labelled Price
+                                    </label>
+
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        placeholder="0.00"
+                                        className={inputClass}
+                                        value={labelledPrice}
+                                        onChange={(e) =>
+                                            setLabelledPrice(e.target.value)
+                                        }
+                                    />
+
+                                    <p className="mt-2 text-xs text-slate-400">
+                                        Original / displayed price.
+                                    </p>
+                                </div>
+
+                                {/* Selling Price */}
+                                <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4">
+                                    <label className={labelClass}>
+                                        <DollarSign className="h-4 w-4 text-slate-400" />
+                                        Selling Price
+                                    </label>
+
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        placeholder="0.00"
+                                        className={inputClass}
+                                        value={price}
+                                        onChange={(e) =>
+                                            setPrice(e.target.value)
+                                        }
+                                    />
+
+                                    <p className="mt-2 text-xs text-slate-400">
+                                        Current selling price.
+                                    </p>
+                                </div>
+
+                                {/* Stock */}
+                                <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4">
+                                    <label className={labelClass}>
+                                        <BarChart3 className="h-4 w-4 text-slate-400" />
+                                        Stock Quantity
+                                    </label>
+
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        placeholder="0"
+                                        className={inputClass}
+                                        value={stock}
+                                        onChange={(e) =>
+                                            setStock(e.target.value)
+                                        }
+                                    />
+
+                                    <p className="mt-2 text-xs text-slate-400">
+                                        Number of units currently available.
+                                    </p>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* =================================================
+                            ACTION BUTTONS
+                        ================================================== */}
+                        <div className="mt-9 flex flex-col-reverse gap-3 border-t border-slate-100 pt-7 sm:flex-row sm:justify-end">
+
+                            <Link
+                                to="/admin/products"
+                                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-7 text-sm font-semibold text-slate-600 transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                            >
+                                <ArrowLeft className="h-4 w-4" />
+                                Cancel
+                            </Link>
+
+                            <button
+                                type="button"
+                                onClick={updateProduct}
+                                className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-slate-900 px-8 text-sm font-semibold text-white shadow-lg shadow-slate-900/15 transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-xl hover:shadow-slate-900/20 focus:outline-none focus:ring-4 focus:ring-slate-900/10"
+                            >
+                                <Save className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+                                Update Product
+                            </button>
                         </div>
                     </div>
+                </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex flex-col sm:flex-row gap-4 justify-end items-center mt-10 pt-6 border-t border-gray-200">
-                        <Link
-                            to="/admin/products"
-                            className="w-full sm:w-auto px-8 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all duration-300 text-center border border-gray-200 hover:border-gray-300 shadow-sm hover:shadow-md transform hover:scale-105"
-                        >
-                            Cancel
-                        </Link>
-                        <button
-                            className="w-full sm:w-auto px-8 py-3 bg-gradient-to-br from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300/70"
-                            onClick={updateProduct}
-                        >
-                            Update Product
-                        </button>
-                    </div>
+                {/* Footer Helper */}
+                <div className="mt-5 text-center text-xs text-slate-400">
+                    Review all changes carefully before updating the product.
                 </div>
             </div>
         </div>
